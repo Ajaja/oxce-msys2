@@ -92,4 +92,4 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.artifact_name }}
           name: ${{ steps.version.outputs.artifact_name }}
-          files: bin/${{ steps.version.outputs.artifact_name }}.zip
+          files: build/${{ steps.version.outputs.artifact_name }}.zip
