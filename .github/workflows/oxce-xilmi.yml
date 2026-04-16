@@ -77,7 +77,8 @@ jobs:
 
           cmake --build . --config Release --parallel $(nproc)
           cp bin/openxcom.exe ../bin/OpenXcomEx-Xilmi.exe
-          zip -r "${{ steps.version.outputs.artifact_name }}.zip" ./bin/*
+          cd ../bin
+          zip -r "${{ steps.version.outputs.artifact_name }}.zip" ./*
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -92,4 +93,4 @@ jobs:
         with:
           tag_name: ${{ steps.version.outputs.artifact_name }}
           name: ${{ steps.version.outputs.artifact_name }}
-          files: build/${{ steps.version.outputs.artifact_name }}.zip
+          files: bin/${{ steps.version.outputs.artifact_name }}.zip
