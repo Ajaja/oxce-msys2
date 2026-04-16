@@ -27,6 +27,7 @@ jobs:
           msystem: UCRT64
           update: true
           install: >-
+            git
             patch
             mingw-w64-ucrt-x86_64-gcc
             mingw-w64-ucrt-x86_64-winpthreads            
