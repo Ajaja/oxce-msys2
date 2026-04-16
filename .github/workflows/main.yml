@@ -1,0 +1,74 @@
+name: OXCE
+
+on:
+  workflow_dispatch: 
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout OXCE repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          repository: 'MeridianOXC/OpenXcom'
+
+      - name: Checkout MINGW-packages repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          repository: 'msys2/MINGW-packages'
+          path: 'MINGW-packages'
+
+      - name: Setup MSYS2 (UCRT64 environment)
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: UCRT64
+          update: true
+          install: >-
+            patch
+            mingw-w64-ucrt-x86_64-gcc
+            mingw-w64-ucrt-x86_64-winpthreads            
+            mingw-w64-ucrt-x86_64-pkgconf
+            mingw-w64-ucrt-x86_64-cmake
+            mingw-w64-ucrt-x86_64-ninja
+            mingw-w64-ucrt-x86_64-SDL
+            mingw-w64-ucrt-x86_64-SDL_image
+            mingw-w64-ucrt-x86_64-SDL_gfx
+
+      - name: Build deps
+        shell: msys2 {0}
+        run: |
+          cd MINGW-packages/mingw-w64-SDL_mixer
+          sed -i 's|--enable-shared|--disable-shared CFLAGS="-DFLAC__NO_DLL" CXXFLAGS="-DFLAC__NO_DLL"|' PKGBUILD
+          MINGW_ARCH=ucrt64 makepkg-mingw -sCLf --noconfirm
+          pacman -U --noconfirm  *.pkg.tar.zst 
+          sed -i 's|Requires: sdl >= 1.2.10|Requires: sdl >= 1.2.10 vorbisfile vorbis ogg flac mad|' /ucrt64/lib/pkgconfig/SDL_mixer.pc
+          sed -i 's|Requires: sdl >= 1.2.10|Requires: sdl >= 1.2.10 libjpeg libpng libtiff-4 libwebp|' /ucrt64/lib/pkgconfig/SDL_image.pc
+
+      - name: Configure and build OpenXcom (Release static)
+        shell: msys2 {0}
+        run: |
+          rm -rf deps
+          mkdir -p build
+          cd build
+          cmake .. -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DDEV_BUILD=OFF \
+            -DBUILD_PACKAGE=OFF \
+            -DPKG_CONFIG_ARGN="--static" \
+            -DCMAKE_CXX_FLAGS="-s -static" \
+            -DCMAKE_EXE_LINKER_FLAGS="-static -static-libgcc -static-libstdc++ -Wl,--strip-all"
+          
+          echo "=== Building (parallel) ==="
+          cmake --build . --config Release --parallel $(nproc)
+          cp bin/openxcom.exe ../bin/OpenXcomEx.exe
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: OXCE
+          path: bin
+          if-no-files-found: error
+          retention-days: 30
