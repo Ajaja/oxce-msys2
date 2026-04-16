@@ -21,6 +21,22 @@ jobs:
           repository: 'msys2/MINGW-packages'
           path: 'MINGW-packages'
 
+      - name: Extract version info
+        shell: bash
+        run: |
+          # Extract version from src/version.h (matches OPENXCOM_VERSION_LONG "X.Y.Z")
+          VERSION=$(grep -oP 'OPENXCOM_VERSION_LONG "\K[0-9]+\.[0-9]+\.[0-9]+' src/version.h)
+
+          COMMIT=$(git rev-parse --short HEAD)
+          DATE=$(git log -1 --format=%cs)
+
+          ARTIFACT_NAME="OXCE-${VERSION}-${COMMIT}-${DATE}-win64"
+
+          echo "VERSION=${VERSION}"             >> $GITHUB_ENV
+          echo "COMMIT=${COMMIT}"               >> $GITHUB_ENV
+          echo "DATE=${DATE}"                   >> $GITHUB_ENV
+          echo "ARTIFACT_NAME=${ARTIFACT_NAME}" >> $GITHUB_ENV
+
       - name: Setup MSYS2 (UCRT64 environment)
         uses: msys2/setup-msys2@v2
         with:
@@ -68,7 +84,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: OXCE
+          name: ${{ env.ARTIFACT_NAME }}
           path: bin
           if-no-files-found: error
           retention-days: 30
