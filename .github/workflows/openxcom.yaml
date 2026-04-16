@@ -38,6 +38,7 @@ jobs:
             mingw-w64-ucrt-x86_64-cmake
             mingw-w64-ucrt-x86_64-ninja
             mingw-w64-ucrt-x86_64-SDL
+            mingw-w64-ucrt-x86_64-SDL_image
 
       - name: Extract version info
         id: version
