@@ -57,11 +57,6 @@ jobs:
           MINGW_ARCH=ucrt64 makepkg-mingw -sCLf --noconfirm
           pacman -U --noconfirm  *.pkg.tar.zst 
 
-          cd ../mingw-w64-SDL_image
-          sed -i 's|--enable-shared|--disable-shared|' PKGBUILD
-          MINGW_ARCH=ucrt64 makepkg-mingw -sCLf --noconfirm
-          pacman -U --noconfirm  *.pkg.tar.zst 
-
           cd ../mingw-w64-SDL_gfx
           sed -i 's|--enable-shared|--disable-shared|' PKGBUILD
           MINGW_ARCH=ucrt64 makepkg-mingw -sCLf --noconfirm
@@ -78,6 +73,10 @@ jobs:
       - name: Configure and build OpenXcom (Release static)
         shell: msys2 {0}
         run: |
+
+          sed -i 's|include_directories ( SYSTEM ${SDLIMAGE_INCLUDE_DIR} )|find_package ( PkgConfig REQUIRED )\n    pkg_check_modules ( SDLIMAGE REQUIRED SDL_image )\n    set ( SDLIMAGE_LIBRARY ${SDLIMAGE_STATIC_LIBRARIES} )|' CMakeLists.txt
+          sed -i 's|set ( SDLMIXER_LIBRARY "${SDLMIXER_LIBRARY} -lwinmm" )|find_package ( PkgConfig REQUIRED )\n    pkg_check_modules ( SDLMIXER REQUIRED SDL_mixer )\n    set ( SDLMIXER_LIBRARY ${SDLMIXER_STATIC_LIBRARIES} )|' src/CMakeLists.txt
+
           rm -rf deps
           mkdir -p build
           cd build
