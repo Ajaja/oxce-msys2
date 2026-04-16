@@ -1,3 +1,4 @@
-OpenXcom Extended (OXCE) MSYS2 UCRT64 Windows x64 static build scripts for<br/>
+OpenXcom and OpenXcom Extended (OXCE) MSYS2 UCRT64 Windows x64 static build scripts for<br/>
+https://github.com/OpenXcom/OpenXcom<br/>
 https://github.com/MeridianOXC/OpenXcom<br/>
 https://github.com/Xilmi/OpenXcom<br/>
