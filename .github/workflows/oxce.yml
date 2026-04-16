@@ -29,6 +29,7 @@ jobs:
           install: >-
             git
             patch
+            zip
             mingw-w64-ucrt-x86_64-gcc
             mingw-w64-ucrt-x86_64-winpthreads            
             mingw-w64-ucrt-x86_64-pkgconf
@@ -74,6 +75,7 @@ jobs:
 
           cmake --build . --config Release --parallel $(nproc)
           cp bin/openxcom.exe ../bin/OpenXcomEx.exe
+          zip -r "${{ steps.version.outputs.artifact_name }}.zip" /bin/*
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -82,12 +84,6 @@ jobs:
           path: bin
           if-no-files-found: error
           retention-days: 30
-
-      - name: Zip artifact
-        shell: msys2 {0}
-        run: |
-          cd bin
-          7z a -tzip "../${{ steps.version.outputs.artifact_name }}.zip" .
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
