@@ -45,7 +45,7 @@ jobs:
         id: version
         shell: msys2 {0}
         run: |
-          VERSION=$(sed -n 's/.*OPENXCOM_VERSION_LONG "\([0-9]*\.[0-9]*\.[0-9]*\)".*/\1/p' src/version.h)
+          VERSION=$(sed -n 's/.*OPENXCOM_VERSION_LONG "\([0-9]*\.[0-9]*\.[0-9]*\)\.[0-9]*".*/\1/p' src/version.h)
           COMMIT=$(git rev-parse --short HEAD)
           DATE=$(git log -1 --format=%cs)
           ARTIFACT_NAME="OXCE-${VERSION}-${COMMIT}-${DATE}-win64"
@@ -54,11 +54,12 @@ jobs:
       - name: Prepearing deps
         shell: msys2 {0}
         run: |
-          VERSION=$(sed -n 's/.*OPENXCOM_VERSION_LONG "\([0-9]*\.[0-9]*\.[0-9]*\)\.[0-9]*".*/\1/p' src/version.h)
-          COMMIT=$(git rev-parse --short HEAD)
-          DATE=$(git log -1 --format=%cs)
-          ARTIFACT_NAME="OXCE-${VERSION}-${COMMIT}-${DATE}-win64"
-          echo "artifact_name=${ARTIFACT_NAME}" >> $GITHUB_OUTPUT
+          cd MINGW-packages/mingw-w64-SDL_mixer
+          sed -i 's|--enable-shared|--disable-shared CFLAGS="-DFLAC__NO_DLL" CXXFLAGS="-DFLAC__NO_DLL"|' PKGBUILD
+          MINGW_ARCH=ucrt64 makepkg-mingw -sCLf --noconfirm
+          pacman -U --noconfirm  *.pkg.tar.zst 
+          sed -i 's|Requires: sdl >= 1.2.10|Requires: sdl >= 1.2.10 vorbisfile vorbis ogg flac mad|' /ucrt64/lib/pkgconfig/SDL_mixer.pc
+          sed -i 's|Requires: sdl >= 1.2.10|Requires: sdl >= 1.2.10 libjpeg libpng libtiff-4 libwebp|' /ucrt64/lib/pkgconfig/SDL_image.pc
           
       - name: Configure and build OpenXcom (Release static)
         shell: msys2 {0}
