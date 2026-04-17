@@ -83,7 +83,7 @@ jobs:
           pacman -U --noconfirm  *.pkg.tar.zst 
           cd ..
 
-          sed -i 's|Requires: sdl >= 1.2.10|Requires:  sdl >= 1.2.10 vorbisfile vorbis ogg flac mad|' /ucrt64/lib/pkgconfig/SDL_mixer.pc
+          sed -i 's|Requires: sdl >= 1.2.10|Requires:  sdl >= 1.2.10 vorbisfile vorbis ogg flac mad mikmod|' /ucrt64/lib/pkgconfig/SDL_mixer.pc
           
       - name: Configure and build OpenXcom (Release static)
         shell: msys2 {0}
