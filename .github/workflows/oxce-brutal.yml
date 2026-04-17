@@ -2,6 +2,11 @@ name: Brutal AI OXCE
 
 on:
   workflow_dispatch: 
+    inputs:
+      commit:
+        description: 'Commit to build. If empty - build current.'
+        required: false
+        default: ''  
 
 jobs:
   build:
@@ -15,6 +20,7 @@ jobs:
         with:
           fetch-depth: 0
           repository: 'Xilmi/OpenXcom'
+          ref: ${{ inputs.commit }}
 
       - name: Checkout MINGW-packages repository
         uses: actions/checkout@v4
@@ -48,7 +54,7 @@ jobs:
           VERSION=$(sed -n 's/.*OPENXCOM_VERSION_LONG "\([0-9]*\.[0-9]*\.[0-9]*\)\.[0-9]*".*/\1/p' src/version.h)
           COMMIT=$(git rev-parse --short HEAD)
           DATE=$(git log -1 --format=%cs)
-          ARTIFACT_NAME="BOXCE-${VERSION}-${COMMIT}-${DATE}-win64"
+          ARTIFACT_NAME="Brutal-OXCE-${VERSION}-${COMMIT}-${DATE}-win64"
           echo "artifact_name=${ARTIFACT_NAME}" >> $GITHUB_OUTPUT
 
       - name: Prepearing deps
