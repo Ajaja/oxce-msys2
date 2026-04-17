@@ -1,7 +1,12 @@
 name: OXCE
 
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: 'Commit to build. If empty - build current.'
+        required: false
+        default: ''
 
 jobs:
   build:
@@ -15,6 +20,7 @@ jobs:
         with:
           fetch-depth: 0
           repository: 'MeridianOXC/OpenXcom'
+          ref: ${{ inputs.commit }}
 
       - name: Checkout MINGW-packages repository
         uses: actions/checkout@v4
