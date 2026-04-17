@@ -89,7 +89,7 @@ jobs:
         shell: msys2 {0}
         run: |
           rm -rf deps
-          sed -i 's^if defined(C4_MSVC) || defined(C4_MINGW)^if defined(C4_MSVC) || defined(C4_MINGW) || defined(__MINGW32__)^' ./libs/rapidyaml/c4/yml/common.hpp
+          sed -i 's/#if defined(C4_MSVC) || defined(C4_MINGW)/#if defined(C4_MSVC) || defined(C4_MINGW) || defined(__MINGW32__)/' ./libs/rapidyaml/c4/yml/common.hpp
           mkdir -p build
           cd build
           cmake .. -G Ninja \
