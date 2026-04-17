@@ -1,4 +1,4 @@
-name: OXCE clang
+name: OXCE-clang
 
 on:
   workflow_dispatch:
