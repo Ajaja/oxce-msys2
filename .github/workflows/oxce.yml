@@ -46,6 +46,7 @@ jobs:
             mingw-w64-ucrt-x86_64-SDL
             mingw-w64-ucrt-x86_64-SDL_image
             mingw-w64-ucrt-x86_64-SDL_gfx
+            mingw-w64-ucrt-x86_64-SDL_mixer
 
       - name: Extract version info
         id: version
@@ -62,28 +63,21 @@ jobs:
         run: |
           export PKG_CONFIG="pkg-config --static"
           sed -i 's|Requires: sdl >= 1.2.10|Requires:  sdl >= 1.2.10 libjpeg libpng libtiff-4 libwebp|' /ucrt64/lib/pkgconfig/SDL_image.pc
+          cd MINGW-packages
 
-          cd MINGW-packages/mingw-w64-fluidsynth
-          sed -i 's|-DBUILD_SHARED_LIBS=ON|-DBUILD_SHARED_LIBS=OFF -DPKG_CONFIG_ARGN="--static"|' PKGBUILD
-          MINGW_ARCH=ucrt64 makepkg-mingw -sCLf --noconfirm
-          pacman -U --noconfirm  *.pkg.tar.zst
-
-          cd ../mingw-w64-libvorbis
+          cd mingw-w64-libvorbis
           sed -i 's|--enable-shared|--disable-shared|' PKGBUILD
           MINGW_ARCH=ucrt64 makepkg-mingw -sCLf --noconfirm
           pacman -U --noconfirm  *.pkg.tar.zst
+          cd ..
 
-          cd ../mingw-w64-libmikmod
-          sed -i 's|--enable-shared|--disable-shared|' PKGBUILD
-          MINGW_ARCH=ucrt64 makepkg-mingw -sCLf --noconfirm
-          pacman -U --noconfirm  *.pkg.tar.zst
-
-          cd ../mingw-w64-SDL_mixer
-          sed -i 's|--enable-shared|--disable-shared CFLAGS="-DFLAC__NO_DLL" CXXFLAGS="-DFLAC__NO_DLL"|' PKGBUILD
+          cd mingw-w64-SDL_mixer
+          sed -i 's|--enable-shared|--disable-shared CFLAGS="-DFLAC__NO_DLL" CXXFLAGS="-DFLAC__NO_DLL" LIBS="-lvorbis -logg"|' PKGBUILD
           MINGW_ARCH=ucrt64 makepkg-mingw -sCLf --noconfirm
           pacman -U --noconfirm  *.pkg.tar.zst 
-          
-          sed -i 's|Requires: sdl >= 1.2.10|Requires: sdl >= 1.2.10 vorbisfile vorbis ogg flac mad|' /ucrt64/lib/pkgconfig/SDL_mixer.pc
+          cd ..
+
+          sed -i 's|Requires: sdl >= 1.2.10|Requires:  sdl >= 1.2.10 vorbisfile vorbis ogg flac mad|' /ucrt64/lib/pkgconfig/SDL_mixer.pc
           
       - name: Configure and build OpenXcom (Release static)
         shell: msys2 {0}
