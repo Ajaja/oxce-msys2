@@ -1,0 +1,94 @@
+name: Test Tag Creation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  test-tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Determine tag name
+        id: vars
+        run: |
+          if [ -n "${{ inputs.tag_name }}" ]; then
+            TAG="${{ inputs.tag_name }}"
+          else
+            TAG="test-tag-$(date -u +%Y%m%d-%H%M%S)"
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Show token permissions context
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Event: ${{ github.event_name }}"
+          echo "SHA: ${{ github.sha }}"
+          echo "Tag to create: ${{ steps.vars.outputs.tag }}"
+
+      - name: Attempt 1 - Create annotated tag via Git Data API
+        id: api_attempt
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.vars.outputs.tag }}-api"
+          REPO="${{ github.repository }}"
+          SHA="${{ github.sha }}"
+          NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          echo "::group::Creating tag object"
+          TAG_SHA=$(gh api "repos/$REPO/git/tags" \
+            -f tag="$TAG" \
+            -f message="Test tag via Git Data API" \
+            -f object="$SHA" \
+            -f type=commit \
+            -f "tagger[name]=github-actions[bot]" \
+            -f "tagger[email]=github-actions[bot]@users.noreply.github.com" \
+            -f "tagger[date]=$NOW" \
+            --jq .sha)
+          echo "Tag object SHA: $TAG_SHA"
+          echo "::endgroup::"
+
+          echo "::group::Creating ref"
+          gh api "repos/$REPO/git/refs" \
+            -f ref="refs/tags/$TAG" \
+            -f sha="$TAG_SHA"
+          echo "::endgroup::"
+
+          echo "SUCCESS: created $TAG via Git Data API"
+
+      - name: Attempt 2 - Create tag via plain git push
+        id: push_attempt
+        continue-on-error: true
+        run: |
+          TAG="${{ steps.vars.outputs.tag }}-push"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git tag -a "$TAG" -m "Test tag via git push"
+          git push origin "$TAG"
+          echo "SUCCESS: created $TAG via git push"
+
+      - name: Attempt 3 - Create lightweight tag via git push
+        id: push_lightweight
+        continue-on-error: true
+        run: |
+          TAG="${{ steps.vars.outputs.tag }}-lightweight"
+          git tag "$TAG"
+          git push origin "$TAG"
+          echo "SUCCESS: created $TAG via lightweight git push"
+
+      - name: Summary
+        run: |
+          echo "## Tag creation test results" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Method | Result |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|---|---|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Git Data API (annotated) | ${{ steps.api_attempt.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| git push (annotated) | ${{ steps.push_attempt.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| git push (lightweight) | ${{ steps.push_lightweight.outcome }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Check the logs above for each attempt's error details (e.g. 403 Resource not accessible by integration)." >> "$GITHUB_STEP_SUMMARY"
+          echo "Remember to delete any tags this created once you're done testing." >> "$GITHUB_STEP_SUMMARY"
