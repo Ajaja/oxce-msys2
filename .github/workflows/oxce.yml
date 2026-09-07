@@ -2,11 +2,6 @@ name: OXCE
 
 on:
   workflow_dispatch:
-    inputs:
-      commit:
-        description: 'Commit to build. If empty - build current.'
-        required: false
-        default: ''
 
 jobs:
   build:
@@ -111,6 +106,37 @@ jobs:
           path: bin
           if-no-files-found: error
           retention-days: 30
+
+      - name: Create annotated tag
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.version.outputs.artifact_name }}"
+          REPO="${{ github.repository }}"
+          SHA="${{ github.sha }}"
+          NOW=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+
+          # Create a proper *annotated* tag object with an explicit tagger
+          # date (right now). Annotated tags store their own creation
+          # timestamp, unlike lightweight tags, whose "creation date" is
+          # just borrowed from whatever commit they happen to point at.
+          # Without this, letting the release action auto-create the tag
+          # produces a lightweight tag pinned to this repo's stale default
+          # branch tip, so every release ends up showing the same old date.
+          TAG_SHA=$(gh api "repos/$REPO/git/tags" \
+            -f tag="$TAG" \
+            -f message="$TAG" \
+            -f object="$SHA" \
+            -f type=commit \
+            -f "tagger[name]=github-actions[bot]" \
+            -f "tagger[email]=github-actions[bot]@users.noreply.github.com" \
+            -f "tagger[date]=$NOW" \
+            --jq .sha)
+
+          gh api "repos/$REPO/git/refs" \
+            -f ref="refs/tags/$TAG" \
+            -f sha="$TAG_SHA"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
